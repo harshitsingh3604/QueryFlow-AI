@@ -12,6 +12,7 @@ ai_bp = Blueprint("ai", __name__)
 @ai_bp.post("/ask")
 def ask():
     try:
+        # 1. Validate request body
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
@@ -26,34 +27,49 @@ def ask():
                 "error": "userInput is required and must be a non-empty string"
             }), 400
 
-        template = get_prompt_template("Education_Prompt")
+        # 2. Get prompt template from MongoDB
+        try:
+            template = get_prompt_template("Education_Prompt")
+        except ValueError as exc:
+            return jsonify({
+                "error": str(exc)
+            }), 404
 
+        # 3. Build final prompt
         final_prompt = build_prompt(
             template,
             user_input
         )
 
-        response = generate_response(final_prompt)
+        # 4. Generate AI response
+        try:
+            response = generate_response(final_prompt)
+        except Exception:
+            return jsonify({
+                "error": "AI service is unavailable"
+            }), 502
 
-        save_history(
-            user_input=user_input.strip(),
-            prompt=final_prompt,
-            response=response,
-            prompt_id="Education_Prompt",
-        )
+        # 5. Save successful request to history
+        try:
+            save_history(
+                user_input=user_input.strip(),
+                prompt=final_prompt,
+                response=response,
+                prompt_id="Education_Prompt",
+            )
+        except PyMongoError:
+            return jsonify({
+                "error": "Failed to save request history"
+            }), 500
 
+        # 6. Return response
         return jsonify({
             "response": response
         }), 200
 
-    except ValueError as exc:
-        return jsonify({
-            "error": str(exc)
-        }), 400
-
     except PyMongoError:
         return jsonify({
-            "error": "Database operation failed"
+            "error": "Database service is unavailable"
         }), 500
 
     except RuntimeError as exc:
@@ -61,8 +77,7 @@ def ask():
             "error": str(exc)
         }), 500
 
-    except Exception as exc:
-        print("ERROR IN /ask:", repr(exc))
+    except Exception:
         return jsonify({
-            "error": str(exc)
-        }), 502
+            "error": "Internal server error"
+        }), 500
