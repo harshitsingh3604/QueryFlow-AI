@@ -8,4 +8,8 @@ def create_app():
     def health():
         return {"status": "ok"}, 200
 
+    from app.routes.ai_routes import ai_bp
+
+    app.register_blueprint(ai_bp)
+
     return app
