@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request
-from pymongo.errors import PyMongoError
+from flask import Blueprint, jsonify, request # type: ignore
+from pymongo.errors import PyMongoError # type: ignore
 
 from app.services.ai_service import (
     generate_response,

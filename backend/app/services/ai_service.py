@@ -2,7 +2,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 from google import genai
 
 load_dotenv()

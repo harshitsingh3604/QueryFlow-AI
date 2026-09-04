@@ -1,6 +1,6 @@
 import time
 from unittest.mock import patch
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError # type: ignore
 from app import create_app
 from app.services.ai_service import MockAIService
 
