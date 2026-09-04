@@ -1,0 +1,193 @@
+{
+  "info": {
+    "_postman_id": "b6c4d9d1-4d75-4c84-9b11-queryflow-ai",
+    "name": "QueryFlow AI API",
+    "description": "Postman collection for the QueryFlow AI Full Stack Developer assessment. Covers health check, single AI question, batch AI questions, and basic validation cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ask - Valid Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userInput\": \"Explain inheritance in Java with a simple example.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ask - Missing userInput",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ask - Empty userInput",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userInput\": \"   \"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Batch Ask - Valid Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userInputs\": [\n    \"What is inheritance in Java?\",\n    \"What is polymorphism in Java?\",\n    \"What is an interface in Java?\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask/batch",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask",
+            "batch"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Batch Ask - Empty Array",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userInputs\": []\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask/batch",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask",
+            "batch"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Batch Ask - Invalid Item",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userInputs\": [\n    \"What is Java?\",\n    123,\n    \"What is Spring Boot?\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ask/batch",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ask",
+            "batch"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
