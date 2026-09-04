@@ -281,6 +281,8 @@ history
 
 ### prompts Collection
 
+The `prompts` collection stores reusable prompt templates.
+
 Insert:
 
 ```json
@@ -290,13 +292,13 @@ Insert:
 }
 ```
 
-The backend retrieves this template dynamically from MongoDB.
+The backend retrieves this template dynamically from MongoDB and replaces `{{userInput}}` with the actual question.
 
 ### history Collection
 
-Each successful request is stored in `history`.
+The `history` collection stores details of processed questions and their results.
 
-Example:
+A successful history document contains:
 
 ```json
 {
@@ -308,11 +310,23 @@ Example:
 }
 ```
 
+For batch requests, each question is stored as a separate history document.
+
+| Field | Description |
+|---|---|
+| `promptId` | ID of the prompt template used |
+| `userInput` | Original question submitted by the user |
+| `prompt` | Final prompt after replacing `{{userInput}}` |
+| `response` | AI service response |
+| `createdAt` | UTC timestamp when the history entry was created |
+
+If an individual batch AI operation fails and error persistence is enabled in the implementation, the corresponding history document can additionally contain an `error` field.
+
 ---
 
 ## 10. Running Backend
 
-Navigate to the backend:
+Navigate to the backend directory:
 
 ```powershell
 cd "C:\Users\Harshit\Desktop\QueryFlow AI\backend"
@@ -388,7 +402,7 @@ Make sure the Flask backend is running before submitting questions.
 
 ---
 
-## 12. API Documentation
+## 12. API Examples
 
 ### POST /ask
 
@@ -412,17 +426,19 @@ POST http://127.0.0.1:5000/ask
 
 ```json
 {
-  "response": "[Mock AI Response] ..."
+  "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Python?"
 }
 ```
 
-#### Success Status
+#### Status
 
 ```text
 200 OK
 ```
 
-#### Invalid Request
+#### Invalid Request Example
+
+Request:
 
 ```json
 {
@@ -462,8 +478,7 @@ POST http://127.0.0.1:5000/ask/batch
 {
   "userInputs": [
     "What is Python?",
-    "What is Flask?",
-    "What is MongoDB?"
+    "What is Flask?"
   ]
 }
 ```
@@ -475,25 +490,17 @@ POST http://127.0.0.1:5000/ask/batch
   "responses": [
     {
       "userInput": "What is Python?",
-      "response": "[Mock AI Response] ..."
+      "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Python?"
     },
     {
       "userInput": "What is Flask?",
-      "response": "[Mock AI Response] ..."
-    },
-    {
-      "userInput": "What is MongoDB?",
-      "response": "[Mock AI Response] ..."
+      "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Flask?"
     }
   ]
 }
 ```
 
-#### Success Status
-
-```text
-200 OK
-```
+The `responses` array follows the same order as the `userInputs` array.
 
 #### Batch Limit
 
@@ -517,52 +524,29 @@ with status:
 
 ## 13. Async Processing
 
-Batch AI calls are processed concurrently using Python's `ThreadPoolExecutor`.
+The batch endpoint uses Python's `ThreadPoolExecutor` to process independent AI requests concurrently.
 
-AI/API calls are primarily I/O-bound, so concurrent execution reduces unnecessary waiting.
+For each question, the backend first creates the final prompt using the template retrieved from MongoDB. These prompts are then submitted to the thread pool, allowing multiple AI operations to execute without waiting for the previous operation to finish.
 
-Without concurrency:
-
-```text
-Question 1 → AI → Wait
-Question 2 → AI → Wait
-Question 3 → AI → Wait
-```
-
-With concurrency:
+Conceptually:
 
 ```text
 Question 1 ─┐
-Question 2 ─┼──→ Concurrent AI calls
+Question 2 ─┼──→ ThreadPoolExecutor → AI responses
 Question 3 ─┘
 ```
 
-The batch size is limited to 10 to control resource usage.
+This approach is suitable for the current AI service because AI/API operations are I/O-bound.
+
+The batch endpoint limits requests to a maximum of 10 questions, which also limits the number of concurrent tasks created for a batch request.
 
 ---
 
 ## 14. Response Ordering
 
-Concurrent tasks may finish in a different order from their submission order.
+Concurrent execution means individual AI calls may complete at different times.
 
-For example:
-
-```text
-Input:
-A
-B
-C
-```
-
-The calls might finish as:
-
-```text
-B
-C
-A
-```
-
-The application collects futures in the original input order, so the API returns:
+For example, the input may be:
 
 ```text
 A
@@ -570,11 +554,31 @@ B
 C
 ```
 
-This provides deterministic results to the frontend.
+while completion may happen as:
+
+```text
+B
+C
+A
+```
+
+The implementation preserves the original order by creating futures in the same order as the input prompts and then collecting their results from those futures in that same order.
+
+Therefore, even if AI operations finish in a different order, the API response remains aligned with the user's original input:
+
+```text
+A
+B
+C
+```
+
+This allows the frontend to reliably associate each response with its corresponding question.
 
 ---
 
 ## 15. Error Handling
+
+The backend validates requests at the API boundary.
 
 ### Single API
 
@@ -603,7 +607,7 @@ Handled cases include:
 - MongoDB errors
 - AI service failures
 
-For batch requests, an individual AI failure can be represented as an error for that item instead of failing the complete batch.
+For batch requests, an individual AI failure can be represented as an error for that specific item instead of failing the complete batch.
 
 Example:
 
@@ -628,6 +632,8 @@ Example:
 
 ### prompts
 
+The `prompts` collection contains reusable prompt templates.
+
 ```json
 {
   "_id": "Education_Prompt",
@@ -637,7 +643,7 @@ Example:
 
 ### history
 
-A successful request creates a document similar to:
+The `history` collection records each processed question.
 
 ```json
 {
@@ -649,13 +655,13 @@ A successful request creates a document similar to:
 }
 ```
 
-For batch requests, each question creates its own history entry.
+For batch requests, each question produces a separate history entry.
 
 ---
 
 ## 17. Testing
 
-The backend uses `pytest`.
+The backend uses `pytest` for automated tests.
 
 Run all tests from the backend directory:
 
@@ -663,18 +669,17 @@ Run all tests from the backend directory:
 python -m pytest -q
 ```
 
-Tests cover:
+The test suite covers:
 
 - Health endpoint
-- Single-question API
-- Valid input
-- Missing input
+- Valid single requests
+- Missing fields
 - Empty input
 - Invalid input
 - AI failure handling
-- Batch API
+- Valid batch requests
 - Empty batch
-- Invalid batch input
+- Invalid batch items
 - Batch response count
 - Response ordering
 - Concurrent processing
@@ -690,7 +695,7 @@ POST /ask
  ↓
 Flask
  ↓
-MongoDB
+MongoDB Prompt
  ↓
 AI Service
  ↓
@@ -708,7 +713,7 @@ POST /ask/batch
  ↓
 Flask
  ↓
-MongoDB
+MongoDB Prompt
  ↓
 Concurrent AI Calls
  ↓
@@ -751,7 +756,7 @@ This improves maintainability and testability.
 
 A mock AI service allows the project to run without requiring a paid AI API.
 
-The AI logic is isolated in `ai_service.py`, making it easier to replace the mock implementation with a real provider.
+The AI logic is isolated in `ai_service.py`, making it easier to replace the mock implementation with a real AI provider.
 
 ### Batch Size Limit
 
