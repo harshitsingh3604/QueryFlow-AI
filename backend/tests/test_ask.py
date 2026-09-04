@@ -1,5 +1,5 @@
 from unittest.mock import patch
-
+from pymongo.errors import PyMongoError
 from app import create_app
 
 
@@ -90,4 +90,25 @@ def test_ask_ai_failure():
     assert response.status_code == 502
     assert response.get_json() == {
         "error": "AI service is unavailable"
+    }
+
+
+def test_ask_database_failure():
+    client = create_test_client()
+
+    with patch(
+        "app.routes.ai_routes.get_prompt_template",
+        side_effect=PyMongoError("MongoDB connection failed"),
+    ):
+        response = client.post(
+            "/ask",
+            json={
+                "userInput": "What is Python?"
+            },
+        )
+
+    assert response.status_code == 500
+
+    assert response.get_json() == {
+        "error": "Database service is unavailable"
     }

@@ -19,7 +19,7 @@ class GeminiAIService:
         self.client = genai.Client(api_key=api_key)
 
         # Current stable Flash model
-        self.model = "gemini-3.8-flash"
+        self.model = "gemini-3.6-flash"
 
     def generate_response(self, prompt, max_retries=3):
 

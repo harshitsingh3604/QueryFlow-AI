@@ -20,6 +20,9 @@ MAX_BATCH_SIZE = 10
 @ai_bp.post("/ask")
 def ask():
     try:
+        # ---------------------------------------------------------
+        # 1. Validate request body
+        # ---------------------------------------------------------
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
@@ -31,9 +34,15 @@ def ask():
 
         if not isinstance(user_input, str) or not user_input.strip():
             return jsonify({
-                "error": "userInput is required and must be a non-empty string"
+                "error": (
+                    "userInput is required and must be "
+                    "a non-empty string"
+                )
             }), 400
 
+        # ---------------------------------------------------------
+        # 2. Get prompt template from MongoDB
+        # ---------------------------------------------------------
         try:
             template = get_prompt_template("Education_Prompt")
         except ValueError as exc:
@@ -41,18 +50,29 @@ def ask():
                 "error": str(exc)
             }), 404
 
+        # ---------------------------------------------------------
+        # 3. Build final prompt
+        # ---------------------------------------------------------
         final_prompt = build_prompt(
             template,
             user_input
         )
 
+        # ---------------------------------------------------------
+        # 4. Generate AI response
+        # ---------------------------------------------------------
         try:
             response = generate_response(final_prompt)
-        except Exception:
+        except Exception as exc:
+            print("AI ERROR:", repr(exc))
+
             return jsonify({
                 "error": "AI service is unavailable"
             }), 502
 
+        # ---------------------------------------------------------
+        # 5. Save request/response history
+        # ---------------------------------------------------------
         try:
             save_history(
                 user_input=user_input.strip(),
@@ -65,6 +85,9 @@ def ask():
                 "error": "Failed to save request history"
             }), 500
 
+        # ---------------------------------------------------------
+        # 6. Return response
+        # ---------------------------------------------------------
         return jsonify({
             "response": response
         }), 200
@@ -74,10 +97,15 @@ def ask():
             "error": "Database service is unavailable"
         }), 500
 
-    except RuntimeError as exc:
+    except RuntimeError:
         return jsonify({
-            "error": str(exc)
+            "error": "AI service is unavailable"
         }), 500
+
+    except ValueError:
+        return jsonify({
+            "error": "Invalid input provided"
+        }), 400
 
     except Exception:
         return jsonify({
@@ -120,14 +148,18 @@ def ask_batch():
             if not isinstance(user_input, str) or not user_input.strip():
                 return jsonify({
                     "error": (
-                        "Every userInputs item must be a "
-                        "non-empty string"
+                        "Every userInputs item must be "
+                        "a non-empty string"
                     )
                 }), 400
 
         # ---------------------------------------------------------
         # 2. Get prompt template from MongoDB
         # ---------------------------------------------------------
+        #
+        # IMPORTANT:
+        # Prompt errors are handled separately from AI errors.
+        #
         try:
             template = get_prompt_template("Education_Prompt")
         except ValueError as exc:
@@ -136,7 +168,7 @@ def ask_batch():
             }), 404
 
         # ---------------------------------------------------------
-        # 3. Build one final prompt for every input
+        # 3. Build final prompt for every input
         # ---------------------------------------------------------
         prompts = []
 
@@ -151,12 +183,15 @@ def ask_batch():
         # 4. Generate AI responses concurrently
         # ---------------------------------------------------------
         try:
-             responses = generate_responses_async(prompts)
+            responses = generate_responses_async(prompts)
+
         except Exception as exc:
+            # Log the actual exception on the server,
+            # but never expose it to the client.
             print("GEMINI BATCH ERROR:", repr(exc))
 
             return jsonify({
-                  "error": str(exc)
+                "error": "AI service is unavailable"
             }), 502
 
         # ---------------------------------------------------------
@@ -174,6 +209,7 @@ def ask_batch():
             }
 
             try:
+                # Successful AI response
                 if "response" in result:
                     response = result["response"]
 
@@ -186,6 +222,7 @@ def ask_batch():
 
                     item["response"] = response
 
+                # Individual AI failure
                 else:
                     error = result.get(
                         "error",
@@ -221,14 +258,14 @@ def ask_batch():
             "error": "Database service is unavailable"
         }), 500
 
-    except RuntimeError as exc:
+    except RuntimeError:
         return jsonify({
-            "error": str(exc)
+            "error": "AI service is unavailable"
         }), 500
 
-    except ValueError as exc:
+    except ValueError:
         return jsonify({
-            "error": str(exc)
+            "error": "Invalid input provided"
         }), 400
 
     except Exception:
