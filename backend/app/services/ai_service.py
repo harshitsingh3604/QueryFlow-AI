@@ -1,4 +1,5 @@
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from dotenv import load_dotenv
@@ -33,6 +34,62 @@ class GeminiAIService:
         return response.text.strip()
 
 
+class MockAIService:
+
+    def generate_response(self, prompt):
+        if not prompt or not prompt.strip():
+            raise ValueError("Prompt cannot be empty")
+
+        delays = {
+            "A": 3,
+            "B": 1,
+            "C": 2,
+            "D": 0.5,
+        }
+
+        question = prompt.strip()
+
+        delay = delays.get(question, 0)
+        time.sleep(delay)
+
+        return f"Response for {question}"
+
+    def generate_responses_async(self, prompts):
+        if not prompts:
+            return []
+
+        results = [None] * len(prompts)
+
+        def process(index, prompt):
+            try:
+                return index, {
+                    "response": self.generate_response(prompt)
+                }
+            except Exception:
+                return index, {
+                    "error": "AI service unavailable"
+                }
+
+        with ThreadPoolExecutor(
+            max_workers=len(prompts)
+        ) as executor:
+
+            futures = [
+                executor.submit(
+                    process,
+                    index,
+                    prompt
+                )
+                for index, prompt in enumerate(prompts)
+            ]
+
+            for future in as_completed(futures):
+                index, result = future.result()
+                results[index] = result
+
+        return results
+
+
 ai_service = GeminiAIService()
 
 
@@ -41,26 +98,4 @@ def generate_response(prompt):
 
 
 def generate_responses_async(prompts):
-    if not prompts:
-        return []
-
-    results = [None] * len(prompts)
-
-    def process(index, prompt):
-        try:
-            return index, generate_response(prompt)
-        except Exception:
-            return index, {"error": "AI service unavailable"}
-
-    with ThreadPoolExecutor(max_workers=len(prompts)) as executor:
-
-        futures = [
-            executor.submit(process, index, prompt)
-            for index, prompt in enumerate(prompts)
-        ]
-
-        for future in as_completed(futures):
-            index, result = future.result()
-            results[index] = result
-
-    return results
+    return ai_service.generate_responses_async(prompts)
