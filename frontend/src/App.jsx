@@ -286,11 +286,17 @@ function App() {
                 <div key={index}>
                   <strong>{item.userInput}</strong>
 
-                  <div className="response">
-                    <ReactMarkdown>
-                      {item.response}
-                    </ReactMarkdown>
-                  </div>
+                  {item.response ? (
+                    <div className="response">
+                      <ReactMarkdown>
+                        {item.response}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="error">
+                      {item.error || "AI service unavailable. Please try again."}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

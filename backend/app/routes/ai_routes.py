@@ -151,10 +151,12 @@ def ask_batch():
         # 4. Generate AI responses concurrently
         # ---------------------------------------------------------
         try:
-            responses = generate_responses_async(prompts)
-        except Exception:
+             responses = generate_responses_async(prompts)
+        except Exception as exc:
+            print("GEMINI BATCH ERROR:", repr(exc))
+
             return jsonify({
-                "error": "AI service is unavailable"
+                  "error": str(exc)
             }), 502
 
         # ---------------------------------------------------------
