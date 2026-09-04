@@ -364,3 +364,38 @@ hr {
     width: 100%;
   }
 }
+
+.response {
+  line-height: 1.7;
+}
+
+.response h1,
+.response h2,
+.response h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.response p {
+  margin: 0.5rem 0;
+}
+
+.response ul,
+.response ol {
+  padding-left: 1.5rem;
+}
+
+.response li {
+  margin-bottom: 0.35rem;
+}
+
+.response code {
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.response pre {
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}

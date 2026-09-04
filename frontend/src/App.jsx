@@ -1,5 +1,8 @@
 import { useState } from "react";
 import "./App.css";
+import ReactMarkdown from "react-markdown";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
   // Single question state
@@ -7,6 +10,7 @@ function App() {
   const [response, setResponse] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   // Batch question state
   const [questions, setQuestions] = useState([
@@ -33,7 +37,7 @@ function App() {
     setResponse("");
 
     try {
-      const result = await fetch("http://127.0.0.1:5000/ask", {
+      const result = await fetch(`${API_BASE_URL}/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,7 +111,7 @@ function App() {
 
     try {
       const result = await fetch(
-        "http://127.0.0.1:5000/ask/batch",
+        `${API_BASE_URL}/ask/batch`,
         {
           method: "POST",
           headers: {
@@ -187,7 +191,9 @@ function App() {
               <h3>Response</h3>
 
               <div className="response">
-                {response}
+                <ReactMarkdown>
+                  {response}
+                </ReactMarkdown>
               </div>
             </div>
           )}
@@ -277,20 +283,14 @@ function App() {
               <h3>Batch Responses</h3>
 
               {batchResponses.map((item, index) => (
-                <div className="batch-response" key={index}>
-                  <strong>
-                    {index + 1}. {item.userInput}
-                  </strong>
+                <div key={index}>
+                  <strong>{item.userInput}</strong>
 
-                  {item.response && (
-                    <p>{item.response}</p>
-                  )}
-
-                  {item.error && (
-                    <p className="item-error">
-                      {item.error}
-                    </p>
-                  )}
+                  <div className="response">
+                    <ReactMarkdown>
+                      {item.response}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               ))}
             </div>
