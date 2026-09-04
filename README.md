@@ -1,289 +1,193 @@
 # QueryFlow AI
 
-QueryFlow AI is a full-stack AI question-answering application built using React, Flask, MongoDB, and a mock AI service.
+A full-stack AI question-answering application built for the Intucate Full Stack Developer case study.
 
-The application supports both single-question and batch-question processing. Batch requests are processed concurrently while preserving the original order of responses.
+The application provides:
 
----
-
-## 1. Project Overview
-
-QueryFlow AI allows users to submit questions through a React frontend.
-
-The Flask backend receives the questions, retrieves a prompt template from MongoDB, replaces the `{{userInput}}` placeholder with the user's question, sends the generated prompt to the AI service, and stores request/response history in MongoDB.
-
-### Main capabilities
-
-- Single-question processing
-- Batch-question processing
-- Concurrent AI processing
-- Ordered batch responses
-- MongoDB-based prompt management
-- Request/response history
-- Input validation
-- Error handling
-- React frontend
+- A Flask REST API for single questions.
+- A Flask REST API for batch questions.
+- MongoDB-backed prompt templates.
+- Google Gemini API integration for AI responses.
+- MongoDB history persistence.
+- Concurrent batch processing while preserving the original input order.
+- A React + Vite frontend for consuming both APIs.
+- Request validation and JSON error handling.
+- Automated backend tests with pytest.
 
 ---
 
-## 2. Problem Statement
+## 1. Technology Stack
 
-The objective is to build an API-driven AI question-answering system where prompts are dynamically retrieved from MongoDB instead of being hard-coded inside API routes.
+### Backend
 
-For every request, the system should:
+- Python 3.10+
+- Flask
+- Flask-CORS
+- PyMongo
+- python-dotenv
+- Google GenAI Python SDK (`google-genai`)
+- pytest
 
-1. Accept the user's question.
-2. Retrieve the required prompt template from MongoDB.
-3. Replace `{{userInput}}` with the user's question.
-4. Send the final prompt to the AI service.
-5. Return the AI response.
-6. Store the request and response in MongoDB.
-7. Support multiple questions through a batch API.
-8. Process batch AI calls concurrently.
-9. Preserve the original order of batch responses.
+### Database
 
----
+- MongoDB / MongoDB Atlas
 
-## 3. Features
+### AI Provider
 
-### Single Question
-
-- Accepts one question using `POST /ask`
-- Validates user input
-- Retrieves prompt template from MongoDB
-- Replaces `{{userInput}}`
-- Generates an AI response
-- Saves request/response history
-- Returns a JSON response
-
-### Batch Questions
-
-- Accepts multiple questions using `POST /ask/batch`
-- Supports up to 10 questions per request
-- Validates every question
-- Generates prompts dynamically
-- Processes AI calls concurrently
-- Preserves original input order
-- Handles individual AI failures
-- Stores batch results in MongoDB history
-
-### Frontend
-
-- React + Vite
-- Single-question interface
-- Dynamic batch question fields
-- Add/remove questions
-- Loading states
-- Error handling
-- Batch response display
-- Responsive dark-themed UI
-
----
-
-## 4. Technology Stack
+- Google Gemini API
+- Current configured model: `gemini-3.6-flash`
 
 ### Frontend
 
 - React
 - Vite
-- JavaScript
-- CSS
-
-### Backend
-
-- Python
-- Flask
-- Flask-CORS
-
-### Database
-
-- MongoDB
-- MongoDB Atlas
-- PyMongo
-
-### Testing
-
-- pytest
-- unittest.mock
-
-### AI
-
-The current implementation uses a local mock AI service for development and testing.
-
-The AI service is separated from the API routes so a real AI provider can be integrated later.
+- React Markdown
 
 ---
 
-## 5. Architecture
-
-```text
-                         React Frontend
-                              |
-                              | HTTP
-                              v
-                       Flask REST API
-                       /                               /ask              /ask/batch
-                    |                    |
-                    v                    v
-              MongoDB Prompt      MongoDB Prompt
-                    |                    |
-                    v                    v
-                AI Service       Concurrent AI Calls
-                                         |
-                                         v
-                                  Ordered Responses
-                                         |
-                                         v
-                                  MongoDB History
-                                         |
-                                         v
-                                   React Frontend
-```
-
-### Single Request Flow
-
-```text
-React
-  ↓
-POST /ask
-  ↓
-Flask
-  ↓
-Retrieve prompt from MongoDB
-  ↓
-Replace {{userInput}}
-  ↓
-AI Service
-  ↓
-Save history to MongoDB
-  ↓
-Return response
-  ↓
-React
-```
-
-### Batch Request Flow
-
-```text
-React
-  ↓
-POST /ask/batch
-  ↓
-Flask
-  ↓
-Retrieve prompt from MongoDB
-  ↓
-Build prompts for all questions
-  ↓
-Concurrent AI calls
-  ↓
-Preserve original order
-  ↓
-Save results to MongoDB history
-  ↓
-Return ordered responses
-  ↓
-React
-```
-
----
-
-## 6. Project Structure
+## 2. Project Structure
 
 ```text
 QueryFlow-AI/
 │
+├── README.md
+├── REQUIREMENTS.md
+├── .gitignore
+│
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
+│   │   │
+│   │   ├── database/
+│   │   │   └── mongodb.py
+│   │   │
 │   │   ├── routes/
 │   │   │   └── ai_routes.py
-│   │   ├── services/
-│   │   │   ├── prompt_service.py
-│   │   │   ├── ai_service.py
-│   │   │   └── history_service.py
-│   │   └── database/
-│   │       └── mongodb.py
+│   │   │
+│   │   └── services/
+│   │       ├── ai_service.py
+│   │       ├── history_service.py
+│   │       └── prompt_service.py
+│   │
 │   ├── scripts/
 │   │   └── seed_database.py
+│   │
 │   ├── tests/
-│   │   ├── test_health.py
+│   │   ├── __init__.py
 │   │   ├── test_ask.py
-│   │   └── test_batch.py
-│   ├── .env
+│   │   ├── test_batch.py
+│   │   └── test_health.py
+│   │
 │   ├── .env.example
 │   ├── .gitignore
 │   ├── requirements.txt
-│   ├── run.py
-│   └── README.md
+│   └── run.py
 │
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   └── index.css
-│   ├── package.json
-│   └── ...
-│
-└── README.md
+└── frontend/
+    ├── public/
+    │   └── favicon.ico
+    │
+    ├── src/
+    │   ├── assets/
+    │   ├── App.css
+    │   ├── App.jsx
+    │   ├── index.css
+    │   └── main.jsx
+    │
+    ├── .env.example
+    ├── .gitignore
+    ├── eslint.config.js
+    ├── index.html
+    ├── package.json
+    ├── package-lock.json
+    ├── README.md
+    └── vite.config.js
 ```
 
 ---
 
-## 7. Prerequisites
+## 3. Architecture
 
-Install the following:
-
-- Python 3.10+
-- Node.js
-- npm
-- MongoDB Atlas account or local MongoDB
-- Git
-
----
-
-## 8. Environment Variables
-
-Create a `.env` file inside the `backend` directory.
-
-```env
-MONGODB_URI=your_mongodb_connection_string
-DATABASE_NAME=intucate_case_study
-AI_API_KEY=your_ai_api_key
-```
-
-| Variable | Description |
-|---|---|
-| `MONGODB_URI` | MongoDB connection string |
-| `DATABASE_NAME` | MongoDB database name |
-| `AI_API_KEY` | API key for a real AI provider if used |
-
-The `.env` file contains sensitive information and should not be committed to Git.
-
-A `.env.example` file is provided as a template.
-
----
-
-## 9. MongoDB Setup
-
-Create a MongoDB database named:
+The backend separates HTTP handling, business logic, database access, and AI communication.
 
 ```text
-intucate_case_study
+React Frontend
+      │
+      │ HTTP / JSON
+      ▼
+Flask Routes
+      │
+      ├──────────────► Prompt Service
+      │                    │
+      │                    ▼
+      │                 MongoDB
+      │
+      ├──────────────► AI Service
+      │                    │
+      │                    ▼
+      │               Gemini API
+      │
+      └──────────────► History Service
+                           │
+                           ▼
+                        MongoDB
 ```
 
-Create these collections:
+### Responsibilities
+
+**Routes**
+
+- Validate HTTP requests.
+- Call the required services.
+- Return JSON responses and HTTP status codes.
+
+**Prompt Service**
+
+- Retrieve the `Education_Prompt` template from MongoDB.
+- Validate the template.
+- Replace `{{userInput}}` with the user's question.
+
+**AI Service**
+
+- Communicate with Google Gemini.
+- Retry temporary Gemini availability errors.
+- Process batch requests concurrently using `ThreadPoolExecutor`.
+- Preserve the original input order.
+
+**History Service**
+
+- Store each interaction in MongoDB.
+
+**Database Module**
+
+- Create and reuse the MongoDB client.
+- Provide access to the `prompts` and `history` collections.
+
+---
+
+## 4. Prerequisites
+
+Install the following before running the project:
+
+- Python 3.10 or newer
+- Node.js and npm
+- MongoDB, or a MongoDB Atlas account
+- A Google Gemini API key
+
+---
+
+## 5. MongoDB Setup
+
+The application uses two MongoDB collections:
 
 ```text
 prompts
 history
 ```
 
-### prompts Collection
+### Prompts collection
 
-The `prompts` collection stores reusable prompt templates.
-
-Insert:
+The application expects a prompt document with:
 
 ```json
 {
@@ -292,77 +196,171 @@ Insert:
 }
 ```
 
-The backend retrieves this template dynamically from MongoDB and replaces `{{userInput}}` with the actual question.
+The template is retrieved from MongoDB at runtime. It is not hard-coded inside the API routes.
 
-### history Collection
+### History collection
 
-The `history` collection stores details of processed questions and their results.
+The `history` collection stores each AI interaction.
 
-A successful history document contains:
+A successful record contains fields similar to:
 
 ```json
 {
   "promptId": "Education_Prompt",
   "userInput": "What is Python?",
   "prompt": "You are an expert in education domain. Answer the following: What is Python?",
-  "response": "[Mock AI Response] ...",
+  "response": "Python is ...",
   "createdAt": "..."
 }
 ```
 
-For batch requests, each question is stored as a separate history document.
+For an individual AI failure during batch processing, the history record can additionally contain an `error` field.
 
-| Field | Description |
-|---|---|
-| `promptId` | ID of the prompt template used |
-| `userInput` | Original question submitted by the user |
-| `prompt` | Final prompt after replacing `{{userInput}}` |
-| `response` | AI service response |
-| `createdAt` | UTC timestamp when the history entry was created |
+### Seed the prompt
 
-If an individual batch AI operation fails and error persistence is enabled in the implementation, the corresponding history document can additionally contain an `error` field.
+The repository includes a seed script:
+
+```bash
+cd backend
+python scripts/seed_database.py
+```
+
+The script creates or updates the `Education_Prompt` document.
 
 ---
 
-## 10. Running Backend
+## 6. Environment Configuration
 
-Navigate to the backend directory:
+Sensitive values are loaded from environment variables.
 
-```powershell
-cd "C:\Users\Harshit\Desktop\QueryFlow AI\backend"
+### Backend
+
+Create:
+
+```text
+backend/.env
 ```
 
-Activate the virtual environment:
+Use the following format:
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+DATABASE_NAME=your_database_name
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+An example file is provided at:
+
+```text
+backend/.env.example
+```
+
+### Frontend
+
+Create:
+
+```text
+frontend/.env
+```
+
+Use:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+An example is provided at:
+
+```text
+frontend/.env.example
+```
+
+### Security
+
+Do not commit the real `.env` files.
+
+Never place the Gemini API key in React/frontend source code.
+
+The intended flow is:
+
+```text
+Browser
+   │
+   ▼
+Flask Backend
+   │
+   ▼
+Gemini API
+```
+
+The Gemini API key remains on the backend.
+
+---
+
+## 7. Backend Installation
+
+From the project root:
+
+```bash
+cd backend
+```
+
+Create and activate a virtual environment if desired.
+
+### Windows PowerShell
 
 ```powershell
-.\venv\Scripts\activate
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 ```
 
 Install dependencies:
 
-```powershell
-python -m pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
 ```
 
-Start Flask:
+---
 
-```powershell
+## 8. Start the Backend
+
+From the `backend` directory:
+
+```bash
 python run.py
 ```
 
-Backend URL:
+The Flask application runs on:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-Health check:
+The frontend is configured to communicate with:
+
+```text
+http://localhost:5000
+```
+
+Make sure the backend is running before using the frontend.
+
+---
+
+## 9. Health Check
+
+The application provides:
+
+```http
+GET /health
+```
+
+Example:
 
 ```text
 http://127.0.0.1:5000/health
 ```
 
-Expected:
+Expected response:
 
 ```json
 {
@@ -372,49 +370,23 @@ Expected:
 
 ---
 
-## 11. Running Frontend
+# 10. API — Single Question
 
-Open another terminal:
+## Endpoint
 
-```powershell
-cd "C:\Users\Harshit\Desktop\QueryFlow AI\frontend"
+```http
+POST /ask
 ```
 
-Install dependencies:
+### Request
 
-```powershell
-npm install
-```
-
-Start Vite:
-
-```powershell
-npm run dev
-```
-
-Frontend URL:
+Content-Type:
 
 ```text
-http://localhost:5173
+application/json
 ```
 
-Make sure the Flask backend is running before submitting questions.
-
----
-
-## 12. API Examples
-
-### POST /ask
-
-Processes a single question.
-
-#### Endpoint
-
-```text
-POST http://127.0.0.1:5000/ask
-```
-
-#### Request
+Example:
 
 ```json
 {
@@ -422,31 +394,181 @@ POST http://127.0.0.1:5000/ask
 }
 ```
 
-#### Response
-
-```json
-{
-  "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Python?"
-}
-```
-
-#### Status
+### Processing flow
 
 ```text
-200 OK
+Client
+  ↓
+Validate userInput
+  ↓
+Retrieve Education_Prompt from MongoDB
+  ↓
+Replace {{userInput}}
+  ↓
+Send final prompt to Gemini
+  ↓
+Receive AI response
+  ↓
+Save interaction to history
+  ↓
+Return JSON
 ```
 
-#### Invalid Request Example
+### Example final prompt
 
-Request:
+If the MongoDB template is:
+
+```text
+You are an expert in education domain. Answer the following: {{userInput}}
+```
+
+and the user sends:
+
+```text
+What is Python?
+```
+
+the generated prompt becomes:
+
+```text
+You are an expert in education domain. Answer the following: What is Python?
+```
+
+### Response
 
 ```json
 {
-  "userInput": ""
+  "response": "Python is a high-level, general-purpose programming language..."
 }
 ```
 
-Response:
+---
+
+# 11. API — Batch Questions
+
+## Endpoint
+
+```http
+POST /ask/batch
+```
+
+### Request
+
+```json
+{
+  "userInputs": [
+    "What is Python?",
+    "What is Flask?",
+    "What is MongoDB?"
+  ]
+}
+```
+
+### Processing
+
+The prompt template is retrieved once and used to build a prompt for each question.
+
+The AI requests are then submitted concurrently using `ThreadPoolExecutor`.
+
+```text
+Question 1 ──┐
+Question 2 ──┼──► Concurrent Gemini requests
+Question 3 ──┘
+```
+
+The backend uses a maximum of three concurrent Gemini requests at a time.
+
+### Response ordering
+
+Requests can finish in a different order:
+
+```text
+Question 2
+Question 3
+Question 1
+```
+
+but the returned responses remain associated with their original inputs:
+
+```json
+{
+  "responses": [
+    {
+      "userInput": "What is Python?",
+      "response": "..."
+    },
+    {
+      "userInput": "What is Flask?",
+      "response": "..."
+    },
+    {
+      "userInput": "What is MongoDB?",
+      "response": "..."
+    }
+  ]
+}
+```
+
+The implementation uses the original input index to restore ordering after concurrent execution.
+
+### Batch limit
+
+The API accepts a maximum of:
+
+```text
+10 questions
+```
+
+A request containing more than 10 questions returns HTTP `400`.
+
+---
+
+# 12. Validation
+
+The APIs validate incoming JSON requests.
+
+### Single API
+
+The following are rejected:
+
+- Missing request body
+- Non-JSON request body
+- Missing `userInput`
+- Empty `userInput`
+- Whitespace-only `userInput`
+- Non-string `userInput`
+
+### Batch API
+
+The following are rejected:
+
+- Missing request body
+- Non-JSON request body
+- Missing `userInputs`
+- `userInputs` not being an array
+- Empty `userInputs`
+- More than 10 questions
+- Empty question items
+- Non-string question items
+
+Invalid requests return JSON error responses with HTTP `400`.
+
+---
+
+# 13. Error Handling
+
+The backend handles:
+
+- Invalid client input
+- MongoDB failures
+- Missing prompt templates
+- AI/Gemini failures
+- History persistence failures
+- Unexpected server errors
+
+Examples:
+
+### Invalid input
 
 ```json
 {
@@ -454,354 +576,428 @@ Response:
 }
 ```
 
-Status:
-
-```text
-400 Bad Request
-```
-
----
-
-### POST /ask/batch
-
-Processes multiple questions in a single request.
-
-#### Endpoint
-
-```text
-POST http://127.0.0.1:5000/ask/batch
-```
-
-#### Request
+### Prompt not found
 
 ```json
 {
-  "userInputs": [
-    "What is Python?",
-    "What is Flask?"
-  ]
+  "error": "Prompt 'Education_Prompt' not found"
 }
 ```
 
-#### Response
+### AI failure
 
 ```json
 {
-  "responses": [
-    {
-      "userInput": "What is Python?",
-      "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Python?"
-    },
-    {
-      "userInput": "What is Flask?",
-      "response": "[Mock AI Response] I received the prompt: You are an expert in education domain. Answer the following: What is Flask?"
-    }
-  ]
+  "error": "AI service is unavailable"
 }
 ```
 
-The `responses` array follows the same order as the `userInputs` array.
-
-#### Batch Limit
-
-The maximum batch size is 10 questions.
-
-A request containing more than 10 questions returns:
+### History persistence failure
 
 ```json
 {
-  "error": "Maximum batch size is 10"
+  "error": "Failed to save request history"
 }
 ```
 
-with status:
-
-```text
-400 Bad Request
-```
+Internal stack traces are not returned to API clients.
 
 ---
 
-## 13. Async Processing
+# 14. Gemini Integration
 
-The batch endpoint uses Python's `ThreadPoolExecutor` to process independent AI requests concurrently.
+The project uses the official Google GenAI Python SDK.
 
-For each question, the backend first creates the final prompt using the template retrieved from MongoDB. These prompts are then submitted to the thread pool, allowing multiple AI operations to execute without waiting for the previous operation to finish.
-
-Conceptually:
+The Gemini integration is isolated in:
 
 ```text
-Question 1 ─┐
-Question 2 ─┼──→ ThreadPoolExecutor → AI responses
-Question 3 ─┘
+backend/app/services/ai_service.py
 ```
 
-This approach is suitable for the current AI service because AI/API operations are I/O-bound.
+The API key is loaded from:
 
-The batch endpoint limits requests to a maximum of 10 questions, which also limits the number of concurrent tasks created for a batch request.
+```env
+GEMINI_API_KEY=...
+```
+
+The configured model is:
+
+```text
+gemini-3.6-flash
+```
+
+The service calls Gemini with the final prompt generated from the MongoDB template.
+
+The service also retries temporary Gemini availability errors before returning an AI failure.
 
 ---
 
-## 14. Response Ordering
+# 15. Frontend
 
-Concurrent execution means individual AI calls may complete at different times.
+The frontend is a React + Vite application.
 
-For example, the input may be:
+It provides:
+
+### Single Question
+
+- Text input
+- Validation
+- Loading state
+- API request
+- Error state
+- Markdown-formatted AI response
+
+### Batch Questions
+
+- Multiple question inputs
+- Add/remove question controls
+- Maximum of 10 questions
+- Loading state
+- Error handling
+- AI response display
+- Responses displayed in original input order
+
+Gemini responses can contain Markdown such as:
 
 ```text
-A
-B
-C
+**important**
+
+- Point one
+- Point two
 ```
 
-while completion may happen as:
-
-```text
-B
-C
-A
-```
-
-The implementation preserves the original order by creating futures in the same order as the input prompts and then collecting their results from those futures in that same order.
-
-Therefore, even if AI operations finish in a different order, the API response remains aligned with the user's original input:
-
-```text
-A
-B
-C
-```
-
-This allows the frontend to reliably associate each response with its corresponding question.
+The frontend uses `react-markdown` to render this formatting.
 
 ---
 
-## 15. Error Handling
+# 16. Run the Frontend
 
-The backend validates requests at the API boundary.
+Open a second terminal.
 
-### Single API
+From the project root:
 
-Handled cases include:
-
-- Missing JSON body
-- Missing `userInput`
-- Empty `userInput`
-- Whitespace-only input
-- Invalid input type
-- Prompt not found
-- MongoDB errors
-- AI service errors
-- Internal server errors
-
-### Batch API
-
-Handled cases include:
-
-- Missing JSON body
-- Missing `userInputs`
-- Empty array
-- More than 10 questions
-- Invalid item type
-- Empty question
-- MongoDB errors
-- AI service failures
-
-For batch requests, an individual AI failure can be represented as an error for that specific item instead of failing the complete batch.
-
-Example:
-
-```json
-{
-  "responses": [
-    {
-      "userInput": "Question A",
-      "response": "..."
-    },
-    {
-      "userInput": "Question B",
-      "error": "AI service unavailable"
-    }
-  ]
-}
+```bash
+cd frontend
 ```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Make sure `frontend/.env` contains:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Vite will provide a local URL, normally:
+
+```text
+http://localhost:5173
+```
+
+Open that URL in the browser.
 
 ---
 
-## 16. Database Schema
+# 17. Testing
 
-### prompts
+The backend uses `pytest`.
 
-The `prompts` collection contains reusable prompt templates.
+From the backend directory:
 
-```json
-{
-  "_id": "Education_Prompt",
-  "template": "You are an expert in education domain. Answer the following: {{userInput}}"
-}
-```
-
-### history
-
-The `history` collection records each processed question.
-
-```json
-{
-  "promptId": "Education_Prompt",
-  "userInput": "What is Python?",
-  "prompt": "You are an expert in education domain. Answer the following: What is Python?",
-  "response": "[Mock AI Response] ...",
-  "createdAt": "..."
-}
-```
-
-For batch requests, each question produces a separate history entry.
-
----
-
-## 17. Testing
-
-The backend uses `pytest` for automated tests.
-
-Run all tests from the backend directory:
-
-```powershell
+```bash
 python -m pytest -q
 ```
 
 The test suite covers:
 
+### Health
+
 - Health endpoint
-- Valid single requests
-- Missing fields
+
+### Single API
+
+- Valid request
+- Missing input
 - Empty input
-- Invalid input
-- AI failure handling
-- Valid batch requests
+- Invalid input type
+- AI failure
+- Database failure
+
+### Batch API
+
+- Valid batch
 - Empty batch
-- Invalid batch items
-- Batch response count
+- Missing `userInputs`
+- Invalid `userInputs` type
+- Invalid batch item
+- Response count
 - Response ordering
-- Concurrent processing
+- AI failure handling
+- Database failure
+- Maximum batch size
+- Invalid JSON body
+- Prompt not found
+- History persistence
+- Concurrent execution/order behavior
 
-The application can also be manually tested end-to-end through the React frontend.
+The concurrency test uses controlled completion delays to verify that results remain in the original order even when requests finish at different times.
 
-### Single End-to-End Flow
+---
+
+# 18. Manual API Testing
+
+The APIs can be tested with Thunder Client, Postman, curl, or another REST client.
+
+### Single request
+
+```http
+POST http://127.0.0.1:5000/ask
+Content-Type: application/json
+```
+
+```json
+{
+  "userInput": "Explain polymorphism in Java."
+}
+```
+
+### Batch request
+
+```http
+POST http://127.0.0.1:5000/ask/batch
+Content-Type: application/json
+```
+
+```json
+{
+  "userInputs": [
+    "What is Python?",
+    "What is Flask?",
+    "What is MongoDB?"
+  ]
+}
+```
+
+---
+
+# 19. End-to-End Flow
+
+## Single Question
 
 ```text
 React
- ↓
-POST /ask
- ↓
+  │
+  │ POST /ask
+  ▼
 Flask
- ↓
-MongoDB Prompt
- ↓
-AI Service
- ↓
-MongoDB History
- ↓
+  │
+  ├── Validate input
+  │
+  ├── Retrieve Education_Prompt
+  │        │
+  │        ▼
+  │     MongoDB
+  │
+  ├── Build final prompt
+  │
+  ├── Gemini API
+  │        │
+  │        ▼
+  │     AI response
+  │
+  ├── Save history
+  │        │
+  │        ▼
+  │     MongoDB
+  │
+  ▼
+JSON response
+  │
+  ▼
 React
 ```
 
-### Batch End-to-End Flow
+## Batch
 
 ```text
 React
- ↓
-POST /ask/batch
- ↓
+  │
+  │ POST /ask/batch
+  ▼
 Flask
- ↓
-MongoDB Prompt
- ↓
-Concurrent AI Calls
- ↓
-Ordered Responses
- ↓
-MongoDB History
- ↓
+  │
+  ├── Validate all inputs
+  │
+  ├── Retrieve prompt once
+  │
+  ├── Build prompts
+  │
+  ├── ThreadPoolExecutor
+  │       ├── Gemini request 1
+  │       ├── Gemini request 2
+  │       └── Gemini request 3
+  │
+  ├── Restore original input order
+  │
+  ├── Save each result to history
+  │
+  ▼
+JSON response
+  │
+  ▼
 React
 ```
 
 ---
 
-## 18. Design Decisions
+# 20. Configuration and Security Notes
+
+- Never commit `backend/.env`.
+- Never commit `frontend/.env`.
+- Never put `GEMINI_API_KEY` in frontend code.
+- Use `.env.example` files as configuration templates.
+- Keep MongoDB credentials in environment variables.
+- Do not commit API keys to GitHub.
+
+---
+
+# 21. Design Decisions
 
 ### MongoDB Prompt Storage
 
-Prompt templates are stored in MongoDB instead of being hard-coded in API routes.
-
-This separates prompt data from application logic and makes prompt management more flexible.
+The prompt template is retrieved from MongoDB rather than being hard-coded in the API route. This keeps prompt data separate from HTTP/business logic.
 
 ### Service Layer
 
-The backend separates responsibilities:
+The project separates:
 
 ```text
 Routes
-  ↓
 Services
-  ↓
 Database
+AI Provider
 ```
 
-This improves maintainability and testability.
+This makes the application easier to maintain and test.
 
-### ThreadPoolExecutor
+### Gemini Service
 
-`ThreadPoolExecutor` is used for concurrent batch processing because AI/API calls are I/O-bound.
+Gemini-specific code is isolated in `ai_service.py`. This prevents the Flask routes from being tightly coupled to the AI provider.
 
-### Mock AI Service
+### Concurrent Batch Processing
 
-A mock AI service allows the project to run without requiring a paid AI API.
-
-The AI logic is isolated in `ai_service.py`, making it easier to replace the mock implementation with a real AI provider.
-
-### Batch Size Limit
-
-The batch API is limited to 10 questions to prevent uncontrolled resource usage.
+`ThreadPoolExecutor` is used because calls to the external Gemini API are I/O-bound. Multiple requests can be in progress at the same time without unnecessarily processing the entire batch sequentially.
 
 ### Response Ordering
 
-The application explicitly preserves original input order even though AI calls execute concurrently.
+Each prompt is associated with its original index. Results are placed back into that index so concurrent completion does not change the API response order.
+
+### Batch Size
+
+The batch API is limited to 10 questions to avoid uncontrolled resource usage.
+
+### Markdown Responses
+
+Gemini can return Markdown. The React frontend uses `react-markdown` so headings, lists, bold text, and other supported Markdown formatting are rendered properly.
 
 ---
 
-## 19. Limitations
+# 22. Limitations
 
-- The current implementation uses a mock AI service.
-- No authentication or authorization is implemented.
+- Authentication and authorization are not implemented.
+- API rate limiting is not implemented.
 - Prompt selection currently uses `Education_Prompt`.
-- No API rate limiting is implemented.
-- No history dashboard is currently available.
-- No pagination API for history is implemented.
-- The application is primarily designed for the assessment/demo environment.
+- There is no frontend history dashboard.
+- There is no history pagination/filtering API.
 - Production monitoring and advanced observability are not implemented.
+- The application is primarily intended for the assessment/demo environment.
 
 ---
 
-## 20. Future Improvements
+# 23. Possible Future Improvements
 
-Potential improvements include:
-
-- Integrate OpenAI or another production LLM provider.
 - Add authentication and authorization.
 - Add API rate limiting.
-- Add structured logging.
-- Add request IDs.
-- Add retry mechanisms for temporary AI failures.
+- Add structured logging and request IDs.
+- Add retry/backoff handling for additional transient AI errors.
 - Add MongoDB indexes for history queries.
 - Add history pagination and filtering.
 - Add a frontend history dashboard.
 - Support multiple prompt templates.
 - Add Docker support.
-- Add CI/CD using GitHub Actions.
+- Add CI/CD.
+- Add integration and load testing.
 - Add production monitoring and metrics.
-- Add comprehensive integration and load testing.
+
+---
+
+## 24. Assessment Requirement Mapping
+
+| Assessment Requirement | Implementation |
+|---|---|
+| Python + Flask backend | `backend/` |
+| MongoDB | `backend/app/database/mongodb.py` |
+| Prompt collection | `prompts` collection |
+| `Education_Prompt` | `backend/scripts/seed_database.py` |
+| `{{userInput}}` replacement | `prompt_service.py` |
+| AI response | `ai_service.py` using Gemini |
+| History persistence | `history_service.py` |
+| Single API | `POST /ask` |
+| Batch API | `POST /ask/batch` |
+| Concurrent processing | `ThreadPoolExecutor` |
+| Original response order | Indexed result collection |
+| Input validation | `ai_routes.py` |
+| JSON error handling | `ai_routes.py` |
+| Frontend client | `frontend/` |
+| Single question UI | `frontend/src/App.jsx` |
+| Batch question UI | `frontend/src/App.jsx` |
+| Loading/error states | `frontend/src/App.jsx` |
+| Markdown response rendering | `react-markdown` |
+| Automated tests | `backend/tests/` |
+| Environment configuration | `.env.example` files |
+| Secret protection | `.gitignore` |
+
+---
+
+## 25. Quick Start
+
+### Terminal 1 — Backend
+
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python scripts/seed_database.py
+python run.py
+```
+
+### Terminal 2 — Frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:5173
+```
 
 ---
 
 ## License
 
-This project was developed as part of a Full Stack Developer assessment.
+This project was developed as part of the Intucate Full Stack Developer assessment.
